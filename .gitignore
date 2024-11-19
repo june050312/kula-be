@@ -1,0 +1,30 @@
+# Node.js 관련
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.pnpm-debug.log*
+dist/
+build/
+
+# 환경 설정 파일 (비밀번호, API 키 등이 포함될 수 있음)
+.env
+.env.local
+.env.*.local
+
+# IDE 및 에디터 관련
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS 관련
+.DS_Store
+Thumbs.db
+
+# 테스트 관련
+coverage/
+*.log
+jest-report/
+test-output/
