@@ -5,7 +5,11 @@ const {
     setLaundaryStatus
 } = require("../controllers/laundaryController")
 
+
+
 router.get("/:id", getLaundaryStatus)
 router.post("/", setLaundaryStatus)
+
+
 
 module.exports = router
