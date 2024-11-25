@@ -1,4 +1,7 @@
 const { ObjectId } = require('mongodb')
+const { Laundary } = require('./../models/laundary.js')
+
+
 let connectDB = require('./../utils/database.js')
 let db
 connectDB.then((client)=>{
@@ -7,6 +10,7 @@ connectDB.then((client)=>{
 }).catch((err)=>{
   console.log(err)
 }) 
+
 
 const getLaundaryStatus = async(req, res) => {
     try {
@@ -53,7 +57,31 @@ const setLaundaryStatus = async(req, res) => {
     }
 }
 
+const addLaundary = async (req, res) => {
+    try {
+        // req.body에서 세탁기의 name과 초기 status를 받음
+        const { name, status } = req.body;
+
+        // name과 status가 제공되지 않았다면 에러 반환
+        if (!name || !status) {
+            return res.status(400).send('Name and status are required');
+        }
+
+        // Laundary 모델을 사용해 새로운 세탁기 인스턴스 생성
+        const newLaundary = await new Laundary({ name, status });
+        // 세탁기 데이터를 DB에 저장
+        const result = await db.collection('laundary').insertOne(newLaundary);
+
+        // 추가된 세탁기의 ID를 반환
+        res.status(201).send({ message: 'Laundary added successfully', id: result.insertedId });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send('An error occurred while adding laundary');
+    }
+};
+
 module.exports = {
     getLaundaryStatus,
-    setLaundaryStatus
+    setLaundaryStatus,
+    addLaundary
 }
