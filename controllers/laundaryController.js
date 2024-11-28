@@ -1,16 +1,4 @@
-const { ObjectId } = require('mongodb')
-const { Laundary } = require('./../models/laundary.js')
-
-
-let connectDB = require('./../utils/database.js')
-let db
-connectDB.then((client)=>{
-  console.log('DB connect on laundary')
-  db = client.db('kula')
-}).catch((err)=>{
-  console.log(err)
-}) 
-
+const Laundary = require('../models/laundary.js')
 
 const getLaundaryStatus = async(req, res) => {
     try {
@@ -21,7 +9,9 @@ const getLaundaryStatus = async(req, res) => {
         }
       
         // DB에서 id에 맞는 세탁기 찾아서
-        const laundary = await db.collection('laundary').findOne({ _id: new ObjectId(laundaryId) });
+        console.log(laundaryId)
+        const laundary = await Laundary.findById(laundaryId)
+        console.log(laundary)
         if (!laundary) {
             return res.status(404).send('Laundary not found');
         }
@@ -41,11 +31,11 @@ const setLaundaryStatus = async(req, res) => {
         if (!id || !status) {
             return res.status(400).send('ID and status are required');
         }
-        const laundaryId = new ObjectId(id);
+        const laundaryId = id;
 
         // DB에서 해당 세탁기 status 바꾼다음에
         // DB에서 해당 세탁기 상태 업데이트
-        const updateResult = await db.collection('laundary').updateOne({ _id: laundaryId }, { $set: { status } });
+        const updateResult = await Laundary.updateOne({ _id: laundaryId }, { $set: { status } });
         if (updateResult.matchedCount === 0) {
             return res.status(404).send('Laundary not found');
         }
@@ -62,15 +52,22 @@ const addLaundary = async (req, res) => {
         // req.body에서 세탁기의 name과 초기 status를 받음
         const { name, status } = req.body;
 
+        console.log(name, status)
+
+
         // name과 status가 제공되지 않았다면 에러 반환
         if (!name || !status) {
             return res.status(400).send('Name and status are required');
         }
 
+
         // Laundary 모델을 사용해 새로운 세탁기 인스턴스 생성
-        const newLaundary = await new Laundary({ name, status });
+        // const newLaundary = await new Laundary({ name, status });
         // 세탁기 데이터를 DB에 저장
-        const result = await db.collection('laundary').insertOne(newLaundary);
+        const result = await Laundary.create({
+            name: name,
+            status: status
+        });
 
         // 추가된 세탁기의 ID를 반환
         res.status(201).send({ message: 'Laundary added successfully', id: result.insertedId });

@@ -10,8 +10,4 @@ const laundarySchema = mongoose.Schema({
     }
 });
 
-const Laundary = mongoose.model('Laundary', laundarySchema);
-
-module.exports = {
-    Laundary
-}
+module.exports = mongoose.model('Laundary', laundarySchema);
