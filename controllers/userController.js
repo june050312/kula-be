@@ -7,7 +7,7 @@ const loginUser = async(req, res) => {
     try {
         const user = req.body
 
-        const user_data = await User.findOne({ user_id: user.user_id });
+        const user_data = await User.findOne({ user_id: user.id });
         if (!user_data) {
             return res.status(401).send("wrong user id")
         }
@@ -18,7 +18,7 @@ const loginUser = async(req, res) => {
         }
 
         const token = jwt.sign({ user_id: user_data.user_id }, jwt_secret);
-        res.cookie("token", token, { httpOnly: true, secure: true });
+        res.cookie("token", token);
 
         res.status(200).send("login success")
     } catch (error) {
@@ -31,21 +31,24 @@ const createUser = async(req, res) => {
         const user = req.body
         console.log(user)
         
-        const user_data = await User.findOne({ user_id: user.user_id });
-        if (user_data) {
-            return res.status(401).send("id already exists")
+        if (user.password === user.passwordConfirm) {
+            const user_data = await User.findOne({ user_id: user.id });
+            if (user_data) {
+                return res.status(401).send("id already exists")
+            }
+
+            const hashed_password = await bcrypt.hash(user.password, 10)
+            await User.create({
+                user_id: user.id,
+                password: hashed_password,
+                name: user.name,
+                school_id: user.schoolId
+            });
+
+            res.status(200).send("register success")
+        } else {
+            res.status(400).send("password is not accord")
         }
-
-        const hashed_password = await bcrypt.hash(user.password, 10)
-        await User.create({
-            user_id: user.user_id,
-            password: hashed_password,
-            name: user.name,
-            email: user.email,
-            phone: user.phone
-        });
-
-        res.status(200).send("register success")
     } catch (error) {
         console.error(error)
     }
