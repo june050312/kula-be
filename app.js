@@ -1,23 +1,24 @@
 const express = require("express")
+const connect = require("./models")
+const cors = require("cors")
+const cookieParser = require("cookie-parser")
 const app = express()
-const { MongoClient } = require('mongodb')
 
 app.use(express.json())
 app.set('view engine', 'ejs') 
 
-app.use("/laundary", require("./routes/laundaryRouter"))
-app.use("/user", require("./routes/userRouter"))
+app.use(cookieParser())
 
-let db
-let connectDB = require('./utils/database.js')
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true
+}))
 
-connectDB.then((client)=>{
-  console.log('DB connect')
-  db = client.db('kula')
+app.use("/api/laundary", require("./routes/laundaryRouter"))
+app.use("/api/user", require("./routes/userRouter"))
 
-  app.listen(process.env.PORT || 8080, () => {
-    console.log("app is listening on port 8080")
-})
-}).catch((err)=>{
-    console.log(err)
+connect()
+
+app.listen(process.env.PORT || 8080, () => {
+  console.log("app is listening on port 8080")
 })
