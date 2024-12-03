@@ -29,47 +29,51 @@ const getLaundaryStatus = async(req, res) => {
 
 const setLaundaryStatus = async(req, res) => {
     try {
-        // req로 사용 요청인지 사용 완료 요청인지, 그리고 어떤 세탁기인지 body로 데이터 받고
         const { id, status } = req.body;
         if (!id || !status) {
             return res.status(400).send('ID and status are required');
         }
-        const laundaryId = id;
 
-        const token = req.cookies.token
-        const decoded_token = jwt.verify(token, jwt_secret)
+        const token = req.cookies.token;
+        const decoded_token = jwt.verify(token, jwt_secret);
+        const userId = decoded_token.user_id;
 
-        console.log(laundaryId)
-
-        // 사용 불가능하게 만들어야함
         if (status === "occupied") {
+            // 사용 시작: 누구나 가능
+            const updateResult = await Laundary.updateOne(
+                { laundary_id: id }, 
+                { $set: { status: status, user: userId } }
+            );
 
-            await Laundary.updateOne({ laundary_id: laundaryId }, { $set: { status: status, user: decoded_token.user_id } })
-
-        // 사용 가능하게 만들어야함
-        } else if (status === "available") {
-
-            const laundaryData = Laundary.findById(laundaryId)
-            if (decoded_token.user_id !== laundaryData.user) {
-                return res.status(400).send("you can't change this laundary status")
-            }
-
-
-            // DB에서 해당 세탁기 status 바꾼다음에
-            // DB에서 해당 세탁기 상태 업데이트
-            const updateResult = await Laundary.updateOne({ _id: laundaryId }, { $set: { status: status, user: "" } });
             if (updateResult.matchedCount === 0) {
-                return res.status(404).send('Laundary not found');
+                return res.status(404).send('세탁기를 찾을 수 없습니다.');
+            }
+        } else if (status === "available") {
+            // 사용 종료: 현재 사용자만 가능
+            const laundary = await Laundary.findOne({ laundary_id: id });
+            if (!laundary) {
+                return res.status(404).send('세탁기를 찾을 수 없습니다.');
             }
 
-            // res로 http status code 보내주기
-            res.status(201).send("laundary status changed successfully")
-        } else {
-            return res.status(400).send("this laundary machine has a problem")
+            if (laundary.user !== userId) {
+                return res.status(403).send('본인이 사용 중인 세탁기만 변경할 수 있습니다.');
+            }
+
+            const updateResult = await Laundary.updateOne(
+                { laundary_id: id }, 
+                { $set: { status: status, user: "" } }
+            );
+
+            if (updateResult.matchedCount === 0) {
+                return res.status(404).send('세탁기를 찾을 수 없습니다.');
+            }
         }
 
+        res.status(200).json({ message: "상태가 변경되었습니다." });
+
     } catch (error) {
-        console.log(error)
+        console.log(error);
+        res.status(500).send('서버 오류가 발생했습니다.');
     }
 }
 
